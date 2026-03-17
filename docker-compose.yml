@@ -1,0 +1,24 @@
+services:
+  postgres:
+    container_name: nest-clean-pg
+    image: postgres:16
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nest-clean
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  cache:
+    container_name: nest-clean-redis
+    image: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+
+volumes:
+  pg_data:
+  redis_data:

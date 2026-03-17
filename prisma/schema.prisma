@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String @unique
+
+  questions     Question[]
+  answers       Answer[]
+  comments      Comment[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Question {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  title        String
+  content      String
+  authorId     String    @map("author_id")
+  bestAnswerId String?   @unique @map("best_answer_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+
+  author      User                 @relation(fields: [authorId], references: [id])
+  bestAnswer  Answer?              @relation("bestAnswer", fields: [bestAnswerId], references: [id])
+  answers     Answer[]
+  comments    Comment[]
+  attachments QuestionAttachment[]
+
+  @@map("questions")
+}
+
+model Answer {
+  id         String    @id @default(uuid())
+  content    String
+  authorId   String    @map("author_id")
+  questionId String    @map("question_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @updatedAt @map("updated_at")
+
+  author       User               @relation(fields: [authorId], references: [id])
+  question     Question           @relation(fields: [questionId], references: [id])
+  bestAnswerOn Question?          @relation("bestAnswer")
+  comments     Comment[]
+  attachments  AnswerAttachment[]
+
+  @@map("answers")
+}
+
+model Comment {
+  id         String    @id @default(uuid())
+  content    String
+  authorId   String    @map("author_id")
+  questionId String?   @map("question_id")
+  answerId   String?   @map("answer_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @updatedAt @map("updated_at")
+
+  author   User      @relation(fields: [authorId], references: [id])
+  question Question? @relation(fields: [questionId], references: [id])
+  answer   Answer?   @relation(fields: [answerId], references: [id])
+
+  @@map("comments")
+}
+
+model Attachment {
+  id    String @id @default(uuid())
+  title String
+  link  String
+
+  questionAttachment QuestionAttachment?
+  answerAttachment   AnswerAttachment?
+
+  @@map("attachments")
+}
+
+model QuestionAttachment {
+  id           String @id @default(uuid())
+  questionId   String @map("question_id")
+  attachmentId String @unique @map("attachment_id")
+
+  question   Question   @relation(fields: [questionId], references: [id])
+  attachment Attachment @relation(fields: [attachmentId], references: [id])
+
+  @@map("question_attachments")
+}
+
+model AnswerAttachment {
+  id           String @id @default(uuid())
+  answerId     String @map("answer_id")
+  attachmentId String @unique @map("attachment_id")
+
+  answer     Answer     @relation(fields: [answerId], references: [id])
+  attachment Attachment @relation(fields: [attachmentId], references: [id])
+
+  @@map("answer_attachments")
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  recipientId String    @map("recipient_id")
+  title       String
+  content     String
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  recipient User @relation(fields: [recipientId], references: [id])
+
+  @@map("notifications")
+}
